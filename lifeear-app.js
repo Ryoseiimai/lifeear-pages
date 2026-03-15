@@ -246,6 +246,32 @@
     return text.replace(/\\/g, "\\\\").replace(/\n/g, "\\n").replace(/,/g, "\\,").replace(/;/g, "\\;");
   }
 
+  function toLocalCalendarDate(date) {
+    const pad = value => String(value).padStart(2, "0");
+    return (
+      date.getFullYear() +
+      pad(date.getMonth() + 1) +
+      pad(date.getDate()) +
+      "T" +
+      pad(date.getHours()) +
+      pad(date.getMinutes()) +
+      pad(date.getSeconds())
+    );
+  }
+
+  function getTimeZone() {
+    try {
+      return Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Tokyo";
+    } catch {
+      return "Asia/Tokyo";
+    }
+  }
+
+  function isIOSDevice() {
+    const ua = navigator.userAgent || "";
+    return /iPad|iPhone|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  }
+
   function buildCalendarEntries(plan) {
     const slots = CALENDAR_SLOTS[plan.modelId] || CALENDAR_SLOTS.founder;
     const today = new Date();
@@ -282,7 +308,39 @@
     ].join("\r\n");
   }
 
-  async function exportPlanToCalendar(itemIndex = null) {
+  function buildGoogleCalendarUrl(itemIndex = null) {
+    if (!state.currentPlan) return;
+    const plan = state.currentPlan;
+    const entries = buildCalendarEntries(plan);
+    const targetEntries = itemIndex === null ? entries : [entries[itemIndex]];
+    const start = targetEntries[0].start;
+    const end = targetEntries[targetEntries.length - 1].end;
+    const title = itemIndex === null ? plan.title : targetEntries[0].title;
+    const details = itemIndex === null
+      ? targetEntries.map((entry, index) => `${index + 1}. ${entry.title}\n${entry.description}`).join("\n\n")
+      : targetEntries[0].description;
+
+    const params = new URLSearchParams({
+      action: "TEMPLATE",
+      text: title,
+      details,
+      dates: `${toLocalCalendarDate(start)}/${toLocalCalendarDate(end)}`,
+      ctz: getTimeZone()
+    });
+
+    return `https://calendar.google.com/calendar/render?${params.toString()}`;
+  }
+
+  function openGoogleCalendar(itemIndex = null) {
+    const url = buildGoogleCalendarUrl(itemIndex);
+    if (!url) return;
+    const popup = window.open(url, "_blank", "noopener");
+    if (!popup) {
+      window.location.href = url;
+    }
+  }
+
+  async function exportPlanToAppleCalendar(itemIndex = null) {
     if (!state.currentPlan) return;
     const plan = state.currentPlan;
     const entries = buildCalendarEntries(plan);
@@ -305,11 +363,30 @@
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = fileName;
+    if (isIOSDevice()) {
+      link.target = "_blank";
+      link.rel = "noopener";
+    } else {
+      link.download = fileName;
+    }
     document.body.appendChild(link);
     link.click();
     link.remove();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  function rememberCurrentPlan() {
+    if (!state.currentPlan) return;
+    const exists = state.logs.some(log => log.createdAt === state.currentPlan.createdAt && log.modelId === state.currentPlan.modelId);
+    if (exists) return;
+    state.logs.unshift({
+      id: `log-${Date.now()}`,
+      ...state.currentPlan,
+      sleep: state.input.sleep,
+      energy: state.input.energy
+    });
+    state.logs = state.logs.slice(0, 20);
+    saveState();
   }
 
   function renderTop() {
@@ -581,25 +658,39 @@
       item.innerHTML =
         `<strong>${label}</strong>` +
         `<div class="small">${text}</div>` +
-        `<div class="actions" style="margin-top:10px">` +
-        `<button class="secondary item-calendar-btn" data-index="${index}">この予定をカレンダーに入れる</button>` +
+        `<div class="button-grid" style="margin-top:10px">` +
+        `<button class="secondary item-google-btn" data-index="${index}">Google</button>` +
+        `<button class="secondary item-apple-btn" data-index="${index}">iPhone / Apple</button>` +
         `</div>`;
       list.appendChild(item);
     });
 
-    list.querySelectorAll(".item-calendar-btn").forEach(button => {
+    list.querySelectorAll(".item-google-btn").forEach(button => {
       button.onclick = async event => {
         pulse(event.currentTarget);
         try {
-          await exportPlanToCalendar(Number(button.dataset.index));
-          showToast("この予定をカレンダーに入れやすい形にしました");
+          openGoogleCalendar(Number(button.dataset.index));
+          showToast("Googleカレンダーの作成画面を開きました");
         } catch {
-          showToast("カレンダー追加はキャンセルされました");
+          showToast("Googleカレンダーを開けませんでした");
         }
       };
     });
 
-    $("calendarBtn").textContent = "全部カレンダーに入れる";
+    list.querySelectorAll(".item-apple-btn").forEach(button => {
+      button.onclick = async event => {
+        pulse(event.currentTarget);
+        try {
+          await exportPlanToAppleCalendar(Number(button.dataset.index));
+          showToast("iPhone / Apple カレンダー用ファイルを開きました");
+        } catch {
+          showToast("Appleカレンダー用ファイルを作れませんでした");
+        }
+      };
+    });
+
+    $("googleCalendarBtn").textContent = "Googleカレンダー";
+    $("appleCalendarBtn").textContent = "iPhone / Apple";
     $("editPlanBtn").textContent = "条件を変える";
   }
 
@@ -712,23 +803,27 @@
     setScreen("today");
   };
 
-  $("calendarBtn").onclick = async event => {
+  $("googleCalendarBtn").onclick = event => {
     if (!state.currentPlan || !state.profile) return;
     pulse(event.currentTarget);
     try {
-      await exportPlanToCalendar();
-      state.logs.unshift({
-        id: `log-${Date.now()}`,
-        ...state.currentPlan,
-        sleep: state.input.sleep,
-        energy: state.input.energy
-      });
-      state.logs = state.logs.slice(0, 20);
-      saveState();
-      showToast("カレンダーに入れやすいファイルを作りました");
-      setScreen("home", { reset: true });
+      openGoogleCalendar();
+      rememberCurrentPlan();
+      showToast("Googleカレンダーの作成画面を開きました");
     } catch {
-      showToast("カレンダー追加はキャンセルされました");
+      showToast("Googleカレンダーを開けませんでした");
+    }
+  };
+
+  $("appleCalendarBtn").onclick = async event => {
+    if (!state.currentPlan || !state.profile) return;
+    pulse(event.currentTarget);
+    try {
+      await exportPlanToAppleCalendar();
+      rememberCurrentPlan();
+      showToast("iPhone / Apple カレンダー用ファイルを開きました");
+    } catch {
+      showToast("Appleカレンダー用ファイルを作れませんでした");
     }
   };
 

@@ -219,6 +219,11 @@
         justify-content:space-between;
         gap:8px;
       }
+      .button-grid{
+        display:grid;
+        grid-template-columns:repeat(2,1fr);
+        gap:8px;
+      }
       .text-link{
         width:auto;
         min-height:auto;
@@ -412,7 +417,10 @@
           <div class="list scroll-panel" id="planList"></div>
 
           <div class="actions">
-            <button class="primary" id="calendarBtn">全部カレンダーに入れる</button>
+            <div class="button-grid">
+              <button class="primary" id="googleCalendarBtn">Googleカレンダー</button>
+              <button class="secondary" id="appleCalendarBtn">iPhone / Apple</button>
+            </div>
             <button class="secondary" id="editPlanBtn">条件を変える</button>
           </div>
         </section>
