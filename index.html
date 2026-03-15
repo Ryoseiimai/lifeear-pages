@@ -1,0 +1,1036 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    >
+    <title>LifeEar 理想の暮らし体験版</title>
+    <style>
+      :root{
+        --bg:#eef6ff;
+        --bg2:#f8fbff;
+        --card:#ffffff;
+        --line:#d9e7f4;
+        --text:#0f172a;
+        --muted:#64748b;
+        --blue:#2563eb;
+        --soft:#edf4ff;
+      }
+      *{box-sizing:border-box}
+      html,body{margin:0}
+      body{
+        min-height:100vh;
+        display:grid;
+        place-items:center;
+        background:
+          radial-gradient(circle at top left, rgba(56,189,248,.16), transparent 24%),
+          linear-gradient(180deg,var(--bg) 0%,var(--bg2) 100%);
+        color:var(--text);
+        font-family:"Hiragino Sans","Yu Gothic UI",sans-serif;
+      }
+      button,input,select,textarea{font:inherit}
+      .app{
+        width:min(430px,100vw);
+        min-height:100dvh;
+        display:grid;
+        grid-template-rows:auto 1fr auto;
+        background:linear-gradient(180deg,#ffffff 0%,#f8fbff 100%);
+        overflow:hidden;
+      }
+      .top{
+        display:grid;
+        grid-template-columns:42px 1fr 86px;
+        gap:10px;
+        align-items:center;
+        padding:14px;
+        border-bottom:1px solid var(--line);
+        background:rgba(255,255,255,.92);
+        backdrop-filter:blur(10px);
+      }
+      .top small{
+        display:block;
+        color:var(--muted);
+        letter-spacing:.08em;
+        text-transform:uppercase;
+      }
+      .top strong{display:block;margin-top:2px}
+      .icon,.ghost,.primary,.secondary,.tab,.choice{
+        border:none;
+        border-radius:18px;
+        cursor:pointer;
+        transition:
+          transform .16s ease,
+          box-shadow .18s ease,
+          background .18s ease,
+          border-color .18s ease;
+      }
+      .icon,.ghost{
+        min-height:40px;
+        background:var(--soft);
+        color:var(--text);
+        font-weight:800;
+      }
+      .ghost{font-size:13px}
+      .hidden{visibility:hidden}
+      .body{padding:14px 14px 92px;overflow:auto}
+      .screen{display:none;gap:14px}
+      .screen.active{display:grid;animation:screen-in .22s ease}
+      @keyframes screen-in{
+        from{opacity:0;transform:translateX(18px)}
+        to{opacity:1;transform:none}
+      }
+      .card{
+        padding:16px;
+        border:1px solid var(--line);
+        border-radius:24px;
+        background:var(--card);
+        box-shadow:0 16px 34px rgba(15,23,42,.06);
+      }
+      .hero{
+        padding:22px 18px;
+        background:
+          radial-gradient(circle at top right, rgba(56,189,248,.12), transparent 32%),
+          linear-gradient(180deg,#ffffff 0%,#f8fbff 100%);
+      }
+      .pill{
+        display:inline-flex;
+        align-items:center;
+        min-height:28px;
+        padding:0 12px;
+        border-radius:999px;
+        font-size:12px;
+        font-weight:800;
+        background:#e8f3ff;
+        color:#2563eb;
+      }
+      h1,h2,h3,p{margin:0}
+      h1{margin-top:12px;font-size:38px;line-height:1.02;letter-spacing:-.06em}
+      h2{font-size:24px;letter-spacing:-.04em}
+      .small,.muted{color:var(--muted);line-height:1.8}
+      .small{font-size:13px}
+      .stack,.list,.timeline,.actions,.steps,.grid2,.reply-grid{display:grid;gap:12px}
+      .primary,.secondary{
+        width:100%;
+        min-height:52px;
+        padding:0 16px;
+        font-weight:800;
+      }
+      .primary{
+        background:linear-gradient(135deg,#0ea5e9,var(--blue));
+        color:#fff;
+        box-shadow:0 14px 28px rgba(37,99,235,.24);
+      }
+      .secondary{background:var(--soft);color:var(--text)}
+      .step,.item,.timeline-item,.fieldbox{
+        padding:13px;
+        border-radius:18px;
+        border:1px solid #e2e8f0;
+        background:#fbfdff;
+      }
+      .choice{
+        padding:16px;
+        border:1px solid var(--line);
+        background:#ffffff;
+        text-align:left;
+        box-shadow:0 10px 24px rgba(15,23,42,.04);
+      }
+      .choice.active{
+        transform:translateY(-2px);
+        border-color:rgba(37,99,235,.28);
+        background:#f3f8ff;
+        box-shadow:0 18px 30px rgba(37,99,235,.10);
+      }
+      .choice strong,.item strong,.timeline-item strong,.step strong{
+        display:block;
+        margin:6px 0 4px;
+      }
+      .ai-note{
+        display:grid;
+        grid-template-columns:auto 1fr;
+        gap:10px;
+        align-items:start;
+      }
+      .ai-voice{
+        width:38px;
+        height:38px;
+        border-radius:14px;
+        display:grid;
+        place-items:center;
+        font-size:18px;
+        background:#e8f3ff;
+      }
+      .ai-bubble{
+        padding:14px 15px;
+        border-radius:20px 20px 20px 8px;
+        background:#f3f8ff;
+        border:1px solid #d9e7f4;
+      }
+      .ai-bubble strong{
+        display:block;
+        margin-bottom:4px;
+      }
+      .micro{
+        font-size:12px;
+        color:var(--muted);
+      }
+      .reply-grid{
+        grid-template-columns:1fr;
+      }
+      .choice .micro{
+        margin-top:6px;
+      }
+      .item-calendar-btn{
+        min-height:42px;
+        font-size:13px;
+      }
+      .time{
+        display:inline-flex;
+        margin-bottom:6px;
+        color:#2563eb;
+        font-size:12px;
+        font-weight:800;
+      }
+      label{display:grid;gap:6px;font-weight:700}
+      input,select,textarea{
+        width:100%;
+        min-height:46px;
+        padding:10px 12px;
+        border-radius:14px;
+        border:1px solid #dbe7f3;
+        background:#f8fbff;
+        color:var(--text);
+      }
+      textarea{min-height:110px;resize:vertical}
+      .tabs{
+        display:none;
+        grid-template-columns:repeat(3,1fr);
+        gap:10px;
+        padding:12px 14px calc(12px + env(safe-area-inset-bottom));
+        border-top:1px solid var(--line);
+        background:rgba(255,255,255,.96);
+      }
+      .tabs.show{display:grid}
+      .tab{
+        min-height:52px;
+        background:var(--soft);
+        color:var(--muted);
+        font-weight:800;
+      }
+      .tab.active{
+        background:linear-gradient(135deg,#0ea5e9,var(--blue));
+        color:#fff;
+      }
+      .empty{
+        padding:14px;
+        border:1px dashed #d4e4f2;
+        border-radius:18px;
+        color:var(--muted);
+        line-height:1.8;
+        background:#fcfdff;
+      }
+      .choice:active,.icon:active,.ghost:active,.primary:active,
+      .secondary:active,.tab:active{transform:scale(.98)}
+      .flash{animation:flash .32s ease}
+      @keyframes flash{
+        0%{transform:scale(.98);filter:brightness(.98)}
+        55%{transform:scale(1.015);filter:brightness(1.04)}
+        100%{transform:none;filter:none}
+      }
+      .toast{
+        position:fixed;
+        left:50%;
+        bottom:86px;
+        transform:translateX(-50%) translateY(18px);
+        width:min(360px,calc(100vw - 28px));
+        padding:12px 14px;
+        border-radius:18px;
+        border:1px solid var(--line);
+        background:rgba(255,255,255,.97);
+        color:var(--text);
+        box-shadow:0 18px 40px rgba(15,23,42,.12);
+        opacity:0;
+        pointer-events:none;
+        transition:opacity .2s ease, transform .2s ease;
+        z-index:10;
+      }
+      .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+      @media (min-width:520px){
+        .app{
+          min-height:min(920px,calc(100vh - 20px));
+          border-radius:34px;
+          border:1px solid rgba(148,163,184,.16);
+        }
+        .grid2,.reply-grid{grid-template-columns:repeat(2,1fr)}
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <header class="top">
+        <button class="icon hidden" id="backBtn">戻る</button>
+        <div>
+          <small id="topSub">LifeEar</small>
+          <strong id="topTitle">理想の暮らし</strong>
+        </div>
+        <button class="ghost hidden" id="topAction">暮らし変更</button>
+      </header>
+
+      <main class="body" id="body">
+        <section class="screen active" id="welcome">
+          <article class="card hero">
+            <span class="pill">理想の暮らし体験版</span>
+            <h1>理想の暮らしを、今日の1日に落とし込む。</h1>
+            <div class="ai-note" style="margin-top:16px">
+              <div class="ai-voice">AI</div>
+              <div class="ai-bubble">
+                <strong>おはようございます。</strong>
+                <div class="small">今日はどんな1日にしたいですか？一緒に整えます。</div>
+              </div>
+            </div>
+            <div class="actions" style="margin-top:18px">
+              <button class="primary" id="startBtn">今日の過ごし方を作る</button>
+            </div>
+          </article>
+        </section>
+
+        <section class="screen" id="choose">
+          <article class="card">
+            <div class="ai-note">
+              <div class="ai-voice">AI</div>
+              <div class="ai-bubble">
+                <strong>今日は何をいちばん整えたいですか？</strong>
+                <div class="small">近いものを押してください。そこから今日の流れを作ります。</div>
+              </div>
+            </div>
+          </article>
+          <div class="list" id="choices"></div>
+        </section>
+
+        <section class="screen" id="detail"></section>
+
+        <section class="screen" id="today">
+          <article class="card">
+            <div class="ai-note">
+              <div class="ai-voice">AI</div>
+              <div class="ai-bubble">
+                <strong>わかりました。今日の状態を少しだけ教えてください。</strong>
+                <div class="small" id="todayLead"></div>
+              </div>
+            </div>
+          </article>
+
+          <article class="card">
+            <div class="grid2">
+              <label>
+                昨夜の睡眠時間
+                <select id="sleepInput"></select>
+              </label>
+              <label>
+                今日どれくらい動けそう？
+                <select id="energyInput">
+                  <option value="low">あまり動けなさそう</option>
+                  <option value="medium" selected>ふつうに動けそう</option>
+                  <option value="high">けっこう動けそう</option>
+                </select>
+              </label>
+            </div>
+          </article>
+
+          <div class="actions">
+            <button class="primary" id="planBtn">今日の過ごし方を見る</button>
+          </div>
+        </section>
+
+        <section class="screen" id="plan">
+          <article class="card hero">
+            <div class="ai-note">
+              <div class="ai-voice">AI</div>
+              <div class="ai-bubble">
+                <strong id="planTitle"></strong>
+                <div id="planSummary" class="small"></div>
+              </div>
+            </div>
+          </article>
+
+          <div class="list" id="planList"></div>
+
+          <div class="actions">
+            <button class="primary" id="calendarBtn">全部カレンダーに入れる</button>
+            <button class="secondary" id="editPlanBtn">条件を変える</button>
+          </div>
+        </section>
+
+        <section class="screen" id="home">
+          <article class="card hero">
+            <div class="ai-note">
+              <div class="ai-voice">AI</div>
+              <div class="ai-bubble">
+                <strong id="homeTitle"></strong>
+                <div id="homeSummary" class="small"></div>
+              </div>
+            </div>
+            <div class="actions" style="margin-top:16px">
+              <button class="primary" id="homeMainBtn">今日の過ごし方を作る</button>
+              <button class="secondary" id="homeSubBtn">理想の暮らしを変える</button>
+            </div>
+          </article>
+        </section>
+
+        <section class="screen" id="reflect">
+          <article class="card">
+            <span class="pill">ふりかえり</span>
+            <h2 style="margin-top:12px">今日はどんな暮らしに近づけましたか？</h2>
+            <p class="small" style="margin-top:8px">
+              大きなことじゃなくて大丈夫です。できたことを一言だけでも残しておくと、
+              次が少しやりやすくなります。
+            </p>
+          </article>
+
+          <article class="card">
+            <label>
+              今日のひとことタグ
+              <select id="tagInput">
+                <option value="仕事が進んだ">仕事が進んだ</option>
+                <option value="体が整った">体が整った</option>
+                <option value="お金を整えられた">お金を整えられた</option>
+                <option value="少し休めた">少し休めた</option>
+              </select>
+            </label>
+            <label style="margin-top:12px">
+              ひとこと
+              <textarea
+                id="postInput"
+                placeholder="今日できたことや、明日につなげたいことを書きます"
+              ></textarea>
+            </label>
+            <div class="actions" style="margin-top:14px">
+              <button class="primary" id="postBtn">ふりかえりを残す</button>
+            </div>
+          </article>
+
+          <article class="card">
+            <span class="pill">これまでのふりかえり</span>
+            <div class="list" id="postList" style="margin-top:12px"></div>
+          </article>
+        </section>
+      </main>
+
+      <nav class="tabs" id="tabs">
+        <button class="tab" data-screen="home">ホーム</button>
+        <button class="tab" data-screen="today">今日</button>
+        <button class="tab" data-screen="reflect">ふりかえり</button>
+      </nav>
+
+      <div class="toast" id="toast"></div>
+    </div>
+
+    <script>
+      const STORAGE = {
+        profile: "lifeear_profile",
+        logs: "lifeear_logs",
+        posts: "lifeear_posts"
+      };
+
+      const MODELS = {
+        work: {
+          title: "仕事に集中する暮らし",
+          badge: "集中",
+          choiceLabel: "仕事を進めたい",
+          choiceHint: "今日の仕事を前に進めたいとき",
+          summary: "朝に大事な仕事を進めて、午後は連絡と調整に寄せる暮らしです。",
+          promise: [
+            "朝のいちばん良い時間を、重要な仕事に使いやすくなります。",
+            "予定が多い日でも、やることが3つに整理されます。",
+            "夜に明日の入口ができるので、迷いが減ります。"
+          ],
+          day: [
+            ["06:30", "起床とメモ", "今日の優先順位を3つだけ決めます。"],
+            ["08:30", "集中ブロック", "通知を切って一番大事な仕事を進めます。"],
+            ["13:30", "連絡と調整", "返信や打ち合わせをまとめて進めます。"],
+            ["21:30", "明日の準備", "明日の最優先をひとつだけ決めて終えます。"]
+          ]
+        },
+        fitness: {
+          title: "体を整える暮らし",
+          badge: "体調",
+          choiceLabel: "体を整えたい",
+          choiceHint: "疲れを整えながら1日を回したいとき",
+          summary: "睡眠、運動、食事のリズムから1日を整えていく暮らしです。",
+          promise: [
+            "朝のスタートを軽く整えて、体の重さを引きずりにくくなります。",
+            "仕事の日でも、無理のない範囲で体を動かせます。",
+            "夜は回復を優先して、次の日の立ち上がりが楽になります。"
+          ],
+          day: [
+            ["06:30", "起床と水分補給", "起きたらまず水を飲んで体を起こします。"],
+            ["07:00", "15分の運動", "軽い運動で体温と気分を上げます。"],
+            ["12:00", "整える昼食", "午後に重くならない食べ方を選びます。"],
+            ["18:30", "回復の夜", "食事と入浴で回復しやすい流れを作ります。"],
+            ["22:30", "就寝準備", "画面時間を減らして眠りやすくします。"]
+          ]
+        },
+        money: {
+          title: "お金を整える暮らし",
+          badge: "お金",
+          choiceLabel: "お金の流れを整えたい",
+          choiceHint: "使い方を見直したいとき",
+          summary: "使う、残す、学ぶの順番を整えていく暮らしです。",
+          promise: [
+            "その日に使ってよい範囲が見えやすくなります。",
+            "買い物の迷いを減らして、後悔しにくくなります。",
+            "少しずつでも、お金の扱いを整える習慣ができます。"
+          ],
+          day: [
+            ["07:00", "朝の確認", "今日使える金額をざっくり決めます。"],
+            ["12:30", "昼の見直し", "使い過ぎていないかを軽く確認します。"],
+            ["18:30", "夜の整理", "その日の支出を振り返ります。"],
+            ["21:00", "学びの時間", "お金の知識を10分だけ増やします。"]
+          ]
+        }
+      };
+
+      const CALENDAR_SLOTS = {
+        work: [
+          { label: "朝", time: "08:30", minutes: 90 },
+          { label: "日中", time: "13:30", minutes: 60 },
+          { label: "夜", time: "21:00", minutes: 30 }
+        ],
+        fitness: [
+          { label: "朝", time: "07:00", minutes: 30 },
+          { label: "日中", time: "12:00", minutes: 45 },
+          { label: "夜", time: "20:30", minutes: 30 }
+        ],
+        money: [
+          { label: "朝", time: "07:00", minutes: 20 },
+          { label: "日中", time: "12:30", minutes: 20 },
+          { label: "夜", time: "21:00", minutes: 30 }
+        ]
+      };
+
+      function readJson(key, fallback) {
+        try {
+          return JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback));
+        } catch {
+          return fallback;
+        }
+      }
+
+      const state = {
+        screen: "welcome",
+        history: [],
+        selected: "fitness",
+        profile: readJson(STORAGE.profile, null),
+        logs: readJson(STORAGE.logs, []),
+        posts: readJson(STORAGE.posts, []),
+        currentPlan: null,
+        input: {
+          sleep: 7,
+          energy: "medium"
+        }
+      };
+
+      if (state.profile?.selectedModel) {
+        state.selected = state.profile.selectedModel;
+        state.screen = "home";
+      }
+
+      const root = {
+        body: document.getElementById("body"),
+        topSub: document.getElementById("topSub"),
+        topTitle: document.getElementById("topTitle"),
+        backBtn: document.getElementById("backBtn"),
+        topAction: document.getElementById("topAction"),
+        tabs: document.getElementById("tabs"),
+        toast: document.getElementById("toast")
+      };
+
+      const $ = id => document.getElementById(id);
+      let toastTimer = null;
+
+      function saveState() {
+        localStorage.setItem(STORAGE.profile, JSON.stringify(state.profile));
+        localStorage.setItem(STORAGE.logs, JSON.stringify(state.logs));
+        localStorage.setItem(STORAGE.posts, JSON.stringify(state.posts));
+      }
+
+      function pulse(el) {
+        if (!el) return;
+        el.classList.remove("flash");
+        void el.offsetWidth;
+        el.classList.add("flash");
+      }
+
+      function showToast(text) {
+        root.toast.textContent = text;
+        root.toast.classList.add("show");
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => root.toast.classList.remove("show"), 1500);
+      }
+
+      function setScreen(next, options = {}) {
+        const { reset = false, replace = false } = options;
+        if (reset) {
+          state.history = [];
+        } else if (!replace && state.screen !== next) {
+          state.history.push(state.screen);
+        }
+        state.screen = next;
+        render();
+        root.body.scrollTo({ top: 0, behavior: "smooth" });
+      }
+
+      function goBack() {
+        if (state.history.length) {
+          state.screen = state.history.pop();
+          render();
+          root.body.scrollTo({ top: 0, behavior: "smooth" });
+          return;
+        }
+        state.screen = state.profile ? "home" : "welcome";
+        render();
+      }
+
+      function energyLabel(value) {
+        if (value === "low") return "あまり動けなさそう";
+        if (value === "high") return "けっこう動けそう";
+        return "ふつうに動けそう";
+      }
+
+      function getCurrentModelKey() {
+        return state.profile?.selectedModel || state.selected;
+      }
+
+      function buildPlan(modelKey) {
+        const model = MODELS[modelKey];
+        const { sleep, energy } = state.input;
+
+        let morning = "朝の流れを軽く整えてから始めます。";
+        let daytime = "日中は無理のないペースで大事なことを進めます。";
+        let night = "夜は次の日につながる終わり方を作ります。";
+
+        if (modelKey === "work") {
+          morning = sleep <= 5
+            ? "朝は15分だけ整理して、最優先をひとつ決めてから動きます。"
+            : "朝の深い集中時間を確保して、一番大事な仕事から始めます。";
+          daytime = energy === "low"
+            ? "仕事は25分ずつ区切って、連絡や調整は午後にまとめます。"
+            : "日中は90分の集中ブロックを1本作って、午後に調整仕事を寄せます。";
+          night = energy === "high"
+            ? "夜に明日の準備を少し厚めにして、明日の立ち上がりを軽くします。"
+            : "夜は早めに切り上げて、明日の最優先だけ決めて終えます。";
+        }
+
+        if (modelKey === "fitness") {
+          morning = sleep <= 5
+            ? "朝は水分補給と軽いストレッチだけにして、回復を優先します。"
+            : "朝に15分だけ体を動かして、体温と気分を上げます。";
+          daytime = energy === "low"
+            ? "日中は無理をせず、歩く回数を増やして体を固めすぎないようにします。"
+            : "日中は座りっぱなしを避けて、こまめに体をほぐします。";
+          night = energy === "high"
+            ? "夜も少し余力があれば、入浴や軽い整理で明日につなげます。"
+            : "夜は食事と入浴を整えて、早めに休める流れを作ります。";
+        }
+
+        if (modelKey === "money") {
+          morning = "朝に今日使う上限を決めて、なんとなく使う流れを止めます。";
+          daytime = energy === "low"
+            ? "日中は買い物を急がず、本当に必要かを一度置いて考えます。"
+            : "使うときは目的を決めてから使い、なんとなくの出費を減らします。";
+          night = energy === "high"
+            ? "夜に支出を振り返って、次に減らせそうなところをひとつ決めます。"
+            : "夜に今日のお金の流れを軽く見直して終えます。";
+        }
+
+        return {
+          title: `今日の ${model.title}`,
+          summary:
+            `${model.summary} ` +
+            `睡眠 ${sleep}時間 / 今日は ${energyLabel(energy)} 前提で、` +
+            `朝・日中・夜の流れに分けました。`,
+          items: [
+            ["朝", morning],
+            ["日中", daytime],
+            ["夜", night]
+          ],
+          modelId: modelKey,
+          createdAt: new Date().toISOString()
+        };
+      }
+
+      function toDateWithTime(baseDate, timeText) {
+        const [hour, minute] = timeText.split(":").map(Number);
+        const date = new Date(baseDate);
+        date.setHours(hour, minute, 0, 0);
+        return date;
+      }
+
+      function toICSDate(date) {
+        const pad = value => String(value).padStart(2, "0");
+        return (
+          date.getUTCFullYear() +
+          pad(date.getUTCMonth() + 1) +
+          pad(date.getUTCDate()) +
+          "T" +
+          pad(date.getUTCHours()) +
+          pad(date.getUTCMinutes()) +
+          pad(date.getUTCSeconds()) +
+          "Z"
+        );
+      }
+
+      function escapeICSText(text) {
+        return text
+          .replace(/\\/g, "\\\\")
+          .replace(/\n/g, "\\n")
+          .replace(/,/g, "\\,")
+          .replace(/;/g, "\\;");
+      }
+
+      function buildCalendarEntries(plan) {
+        const slots = CALENDAR_SLOTS[plan.modelId] || CALENDAR_SLOTS.work;
+        const today = new Date();
+        today.setSeconds(0, 0);
+
+        return plan.items.map(([label, text], index) => {
+          const slot = slots[index] || slots[slots.length - 1];
+          const start = toDateWithTime(today, slot.time);
+          const end = new Date(start.getTime() + slot.minutes * 60 * 1000);
+          return {
+            title: `${label} | ${plan.title}`,
+            description: text,
+            start,
+            end
+          };
+        });
+      }
+
+      function buildICSFromEntries(entries, modelId) {
+        const stamp = toICSDate(new Date());
+        const events = entries
+          .map((entry, index) => {
+            const uid = `lifeear-${modelId}-${Date.now()}-${index}@lifeear.local`;
+            return [
+              "BEGIN:VEVENT",
+              `UID:${uid}`,
+              `DTSTAMP:${stamp}`,
+              `DTSTART:${toICSDate(entry.start)}`,
+              `DTEND:${toICSDate(entry.end)}`,
+              `SUMMARY:${escapeICSText(entry.title)}`,
+              `DESCRIPTION:${escapeICSText(entry.description)}`,
+              "END:VEVENT"
+            ].join("\r\n");
+          })
+          .join("\r\n");
+
+        return [
+          "BEGIN:VCALENDAR",
+          "VERSION:2.0",
+          "PRODID:-//LifeEar//Daily Plan//JA",
+          "CALSCALE:GREGORIAN",
+          "METHOD:PUBLISH",
+          events,
+          "END:VCALENDAR"
+        ].join("\r\n");
+      }
+
+      async function exportPlanToCalendar(itemIndex = null) {
+        if (!state.currentPlan) return;
+
+        const plan = state.currentPlan;
+        const entries = buildCalendarEntries(plan);
+        const targetEntries = itemIndex === null ? entries : [entries[itemIndex]];
+        const ics = buildICSFromEntries(targetEntries, plan.modelId);
+        const suffix = itemIndex === null ? "今日の過ごし方" : `${targetEntries[0].title}`;
+        const fileName = `LifeEar_${suffix}_${new Date().toISOString().slice(0, 10)}.ics`;
+        const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
+        const file = typeof File === "function"
+          ? new File([blob], fileName, { type: "text/calendar" })
+          : null;
+
+        if (file && navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            files: [file],
+            title: itemIndex === null ? plan.title : targetEntries[0].title,
+            text: "LifeEar で作った今日の過ごし方です。"
+          });
+          return;
+        }
+
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      }
+
+      function renderTop() {
+        const titles = {
+          welcome: "理想の暮らし",
+          choose: "理想の暮らしを選ぶ",
+          detail: "選んだ暮らし",
+          today: "今日の状態",
+          plan: "今日の過ごし方",
+          home: "ホーム",
+          reflect: "ふりかえり"
+        };
+        root.topTitle.textContent = titles[state.screen];
+        root.topSub.textContent = state.profile
+          ? MODELS[state.profile.selectedModel].title
+          : "LifeEar";
+        root.backBtn.classList.toggle("hidden", state.history.length === 0);
+        root.topAction.classList.toggle(
+          "hidden",
+          !state.profile || ["welcome", "choose", "detail"].includes(state.screen)
+        );
+      }
+
+      function renderTabs() {
+        root.tabs.classList.remove("show");
+        document.querySelectorAll(".tab").forEach(tab => {
+          tab.classList.toggle("active", tab.dataset.screen === state.screen);
+        });
+      }
+
+      function renderScreens() {
+        ["welcome", "choose", "detail", "today", "plan", "home", "reflect"]
+          .forEach(id => {
+            $(id).classList.toggle("active", id === state.screen);
+          });
+      }
+
+      function renderChoose() {
+        const container = $("choices");
+        container.innerHTML = "";
+
+        Object.entries(MODELS).forEach(([key, model]) => {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = `choice ${state.selected === key ? "active" : ""}`;
+          button.innerHTML = `
+            <span class="pill">${model.badge}</span>
+            <strong>${model.choiceLabel}</strong>
+            <div class="small">${model.choiceHint}</div>
+            <div class="micro">${model.title}</div>
+          `;
+          button.onclick = () => {
+            state.selected = key;
+            state.profile = {
+              id: state.profile?.id || `profile-${Date.now()}`,
+              selectedModel: key,
+              createdAt: state.profile?.createdAt || new Date().toISOString()
+            };
+            saveState();
+            renderChoose();
+            showToast(`${model.choiceLabel}で進めます`);
+            setScreen("today");
+          };
+          container.appendChild(button);
+        });
+      }
+
+      function renderDetail() {
+        return;
+      }
+
+      function renderToday() {
+        const model = MODELS[getCurrentModelKey()];
+        $("todayLead").textContent =
+          `${model.choiceLabel}日にするために、睡眠時間と今日の余力だけ教えてください。`;
+      }
+
+      function renderPlan() {
+        const list = $("planList");
+        list.innerHTML = "";
+
+        if (!state.currentPlan) {
+          $("planTitle").textContent = "まだ今日の過ごし方はありません。";
+          $("planSummary").textContent = "先に今日の状態を入れると、ここにAIからの提案が出ます。";
+          list.innerHTML = '<div class="empty">まだプランはありません。</div>';
+          return;
+        }
+
+        $("planTitle").textContent = "では、今日はこう進めましょう。";
+        $("planSummary").textContent = state.currentPlan.summary;
+
+        state.currentPlan.items.forEach(([label, text], index) => {
+          const item = document.createElement("div");
+          item.className = "item";
+          item.innerHTML =
+            `<strong>${label}</strong>` +
+            `<div class="small">${text}</div>` +
+            `<div class="actions" style="margin-top:10px">` +
+            `<button class="secondary item-calendar-btn" data-index="${index}">` +
+            `この予定をカレンダーに入れる` +
+            `</button>` +
+            `</div>`;
+          list.appendChild(item);
+        });
+
+        list.querySelectorAll(".item-calendar-btn").forEach(button => {
+          button.onclick = async event => {
+            pulse(event.currentTarget);
+            try {
+              await exportPlanToCalendar(Number(button.dataset.index));
+              showToast("この予定をカレンダーに入れやすい形にしました");
+            } catch (error) {
+              showToast("カレンダー追加はキャンセルされました");
+            }
+          };
+        });
+      }
+
+      function renderHome() {
+        if (!state.profile) return;
+
+        $("homeTitle").textContent = "おかえりなさい。今日も一緒に整えますか？";
+        $("homeSummary").textContent =
+          "必要なのは、何を整えたいかと、今日の状態だけです。";
+
+        $("homeMainBtn").onclick = () => setScreen("choose", { reset: true });
+        $("homeSubBtn").onclick = () => {
+          state.selected = state.profile.selectedModel;
+          setScreen("choose", { reset: true });
+        };
+      }
+
+      function renderPosts() {
+        const list = $("postList");
+        list.innerHTML = "";
+
+        if (state.posts.length === 0) {
+          list.innerHTML = '<div class="empty">まだふりかえりはありません。</div>';
+          return;
+        }
+
+        state.posts.forEach(post => {
+          const item = document.createElement("div");
+          item.className = "item";
+          item.innerHTML =
+            `<strong>${post.tag}</strong>` +
+            `<div class="small">${post.body}</div>` +
+            `<div class="small" style="margin-top:6px">` +
+            `${new Date(post.createdAt).toLocaleString("ja-JP")}` +
+            `</div>`;
+          list.appendChild(item);
+        });
+      }
+
+      function render() {
+        renderTop();
+        renderTabs();
+        renderScreens();
+        renderChoose();
+        renderDetail();
+        renderToday();
+        renderPlan();
+        renderHome();
+        renderPosts();
+      }
+
+      function setupSleepOptions() {
+        const select = $("sleepInput");
+        select.innerHTML = "";
+        for (let hour = 1; hour <= 12; hour += 1) {
+          const option = document.createElement("option");
+          option.value = String(hour);
+          option.textContent = `${hour}時間`;
+          if (hour === state.input.sleep) option.selected = true;
+          select.appendChild(option);
+        }
+      }
+
+      $("startBtn").onclick = event => {
+        pulse(event.currentTarget);
+        setScreen("choose");
+      };
+
+      root.backBtn.onclick = event => {
+        pulse(event.currentTarget);
+        goBack();
+      };
+
+      root.topAction.onclick = event => {
+        pulse(event.currentTarget);
+        state.selected = getCurrentModelKey();
+        setScreen("choose", { reset: true });
+      };
+
+      ["sleepInput", "energyInput"].forEach(id => {
+        $(id).addEventListener("input", () => {
+          state.input = {
+            sleep: Number($("sleepInput").value),
+            energy: $("energyInput").value
+          };
+          renderToday();
+        });
+      });
+
+      $("planBtn").onclick = event => {
+        pulse(event.currentTarget);
+        state.currentPlan = buildPlan(getCurrentModelKey());
+        showToast("今日の過ごし方を作りました");
+        setScreen("plan");
+      };
+
+      $("editPlanBtn").onclick = event => {
+        pulse(event.currentTarget);
+        setScreen("today");
+      };
+
+      $("calendarBtn").onclick = async event => {
+        if (!state.currentPlan) return;
+        pulse(event.currentTarget);
+        try {
+          await exportPlanToCalendar();
+          state.logs.push(state.currentPlan);
+          saveState();
+          showToast("カレンダーに入れやすいファイルを作りました");
+          setScreen("home", { reset: true });
+        } catch (error) {
+          showToast("カレンダー追加はキャンセルされました");
+        }
+      };
+
+      $("postBtn").onclick = event => {
+        if (!state.profile) return;
+        const body = $("postInput").value.trim();
+        if (!body) {
+          $("postInput").focus();
+          return;
+        }
+        pulse(event.currentTarget);
+        state.posts.unshift({
+          id: `post-${Date.now()}`,
+          tag: $("tagInput").value,
+          body,
+          modelId: state.profile.selectedModel,
+          createdAt: new Date().toISOString()
+        });
+        $("postInput").value = "";
+        saveState();
+        renderPosts();
+        renderHome();
+        showToast("ふりかえりを残しました");
+      };
+
+      document.querySelectorAll(".tab").forEach(tab => {
+        tab.onclick = event => {
+          pulse(event.currentTarget);
+          if (tab.dataset.screen === "today" && state.profile) {
+            state.selected = state.profile.selectedModel;
+          }
+          setScreen(tab.dataset.screen, { reset: true });
+        };
+      });
+
+      setupSleepOptions();
+      render();
+    </script>
+  </body>
+</html>
