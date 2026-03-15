@@ -24,6 +24,8 @@
       answers: initialProfile?.answers ? { ...initialProfile.answers } : {}
     },
     quizResult: null,
+    routeView: "today",
+    catalogBackTo: "home",
     input: {
       sleep: initialDailyState.sleep || 7,
       energy: initialDailyState.energy || "medium"
@@ -93,6 +95,7 @@
       answers: prefill && state.profile?.answers ? { ...state.profile.answers } : {}
     };
     state.quizResult = null;
+    state.routeView = "today";
     setScreen("choose", { reset: true });
   }
 
@@ -314,6 +317,8 @@
       welcome: "理想の暮らし",
       choose: `質問 ${state.quiz.step + 1}/${QUIZ_STEPS.length}`,
       detail: "おすすめの暮らし",
+      route: "想定ルート",
+      catalog: "暮らし一覧",
       today: "今日の状態",
       plan: "今日の過ごし方",
       home: "ホーム",
@@ -333,7 +338,7 @@
   }
 
   function renderScreens() {
-    ["welcome", "choose", "detail", "today", "plan", "home", "reflect"].forEach(id => {
+    ["welcome", "choose", "detail", "route", "catalog", "today", "plan", "home", "reflect"].forEach(id => {
       $(id).classList.toggle("active", id === state.screen);
     });
   }
@@ -353,14 +358,14 @@
           </div>
         </div>
       </article>
-      <div class="list" id="quizOptions"></div>
+      <div class="compact-stack scroll-panel" id="quizOptions"></div>
     `;
 
     const options = $("quizOptions");
     step.options.forEach(option => {
       const button = document.createElement("button");
       button.type = "button";
-      button.className = `choice ${selected === option.id ? "active" : ""}`;
+      button.className = `choice compact ${selected === option.id ? "active" : ""}`;
       button.innerHTML = `<strong>${option.label}</strong><div class="small">${option.hint}</div>`;
       button.onclick = event => {
         pulse(event.currentTarget);
@@ -392,18 +397,15 @@
         <p class="small" style="margin-top:10px">${state.quizResult.summary}</p>
       </article>
       <article class="card">
-        <span class="pill">判断の理由</span>
-        <div class="list" style="margin-top:12px">
-          ${state.quizResult.reasons.map(reason => `<div class="item"><div class="small">${reason}</div></div>`).join("")}
+        <span class="pill">こう見立てました</span>
+        <div class="compact-stack" style="margin-top:12px">
+          ${state.quizResult.reasons.slice(0, 2).map(reason => `<div class="item"><div class="small">${reason}</div></div>`).join("")}
         </div>
-      </article>
-      <article class="card">
-        <span class="pill">想定ルート</span>
-        <div class="list" style="margin-top:12px">${createRoadmapHtml(state.quizResult)}</div>
       </article>
       <div class="actions">
         <button class="primary" id="confirmProfileBtn">この暮らしで進める</button>
-        <button class="secondary" id="retryQuizBtn">質問をやり直す</button>
+        <button class="secondary" id="openRouteBtn">想定ルートを見る</button>
+        <button class="secondary" id="openCatalogBtn">暮らし一覧を見る</button>
       </div>
     `;
 
@@ -416,6 +418,7 @@
         lastDailyState: state.profile?.lastDailyState || { sleep: 7, energy: "medium" },
         ...state.quizResult
       };
+      state.quizResult = null;
       state.currentPlan = null;
       saveState();
       hydrateInputFromProfile();
@@ -423,10 +426,137 @@
       setScreen("today");
     };
 
-    $("retryQuizBtn").onclick = event => {
+    $("openRouteBtn").onclick = event => {
       pulse(event.currentTarget);
-      state.quiz.step = 0;
-      setScreen("choose", { replace: true });
+      state.routeView = "today";
+      setScreen("route");
+    };
+
+    $("openCatalogBtn").onclick = event => {
+      pulse(event.currentTarget);
+      state.catalogBackTo = "detail";
+      setScreen("catalog");
+    };
+  }
+
+  function renderRoute() {
+    const route = $("route");
+    const profileLike = state.quizResult || state.profile;
+    if (!profileLike?.route) {
+      route.innerHTML = "";
+      return;
+    }
+
+    const labels = {
+      today: "今日",
+      week: "今週",
+      month: "1か月",
+      year: "1年",
+      estimate: "目安"
+    };
+
+    const bodies = {
+      today: profileLike.route.today,
+      week: profileLike.route.week.join(" / "),
+      month: profileLike.route.month,
+      year: profileLike.route.year,
+      estimate: profileLike.route.estimate
+    };
+
+    route.innerHTML = `
+      <article class="card hero">
+        <span class="pill">${profileLike.badge}</span>
+        <h2 style="margin-top:12px">${profileLike.title}</h2>
+        <p class="small" style="margin-top:10px">この暮らしを続けたときの見通しです。</p>
+      </article>
+      <div class="route-tabs">
+        ${Object.entries(labels).map(([key, label]) => `
+          <button type="button" class="route-chip ${state.routeView === key ? "active" : ""}" data-route-key="${key}">${label}</button>
+        `).join("")}
+      </div>
+      <article class="card">
+        <span class="pill">${labels[state.routeView]}</span>
+        <div class="item" style="margin-top:12px">
+          <div class="small">${bodies[state.routeView]}</div>
+        </div>
+      </article>
+      <div class="actions">
+        <button class="primary" id="routeMainBtn">${state.quizResult ? "この暮らしで進める" : "今日の状態に戻る"}</button>
+        <button class="secondary" id="routeCatalogBtn">暮らし一覧を見る</button>
+      </div>
+    `;
+
+    route.querySelectorAll("[data-route-key]").forEach(button => {
+      button.onclick = event => {
+        pulse(event.currentTarget);
+        state.routeView = button.dataset.routeKey;
+        renderRoute();
+      };
+    });
+
+    $("routeMainBtn").onclick = event => {
+      pulse(event.currentTarget);
+      if (state.quizResult) {
+        state.profile = {
+          id: state.profile?.id || `profile-${Date.now()}`,
+          createdAt: state.profile?.createdAt || new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          lastDailyState: state.profile?.lastDailyState || { sleep: 7, energy: "medium" },
+          ...state.quizResult
+        };
+        state.quizResult = null;
+        state.currentPlan = null;
+        saveState();
+        hydrateInputFromProfile();
+        showToast("この暮らしで進めます");
+        setScreen("today");
+        return;
+      }
+      setScreen("today");
+    };
+
+    $("routeCatalogBtn").onclick = event => {
+      pulse(event.currentTarget);
+      state.catalogBackTo = "route";
+      setScreen("catalog");
+    };
+  }
+
+  function renderCatalog() {
+    const catalog = $("catalog");
+    const currentModel = state.quizResult?.selectedModel || state.profile?.selectedModel;
+
+    catalog.innerHTML = `
+      <article class="card">
+        <span class="pill">暮らし一覧</span>
+        <p class="small" style="margin-top:10px">LifeEar では、こんな暮らし方から今の自分に近いものを選びます。</p>
+      </article>
+      <div class="compact-stack scroll-panel" id="catalogList"></div>
+      <div class="actions">
+        <button class="primary" id="catalogBackBtn">${state.quizResult ? "おすすめに戻る" : "今の暮らしに戻る"}</button>
+      </div>
+    `;
+
+    const list = $("catalogList");
+    Object.entries(ARCHETYPES).forEach(([key, model]) => {
+      const item = document.createElement("div");
+      item.className = `choice compact ${currentModel === key ? "active" : ""}`;
+      item.innerHTML = `
+        <div class="catalog-card">
+          <div class="row">
+            <span class="pill">${model.badge}</span>
+            ${currentModel === key ? '<span class="micro">いまのおすすめ</span>' : '<span class="micro">候補</span>'}
+          </div>
+          <strong>${model.title}</strong>
+          <div class="small">${model.intro}</div>
+        </div>
+      `;
+      list.appendChild(item);
+    });
+
+    $("catalogBackBtn").onclick = event => {
+      pulse(event.currentTarget);
+      setScreen(state.catalogBackTo || (state.quizResult ? "detail" : "home"));
     };
   }
 
@@ -464,20 +594,6 @@
       list.appendChild(item);
     });
 
-    if (state.profile?.route) {
-      const route = document.createElement("div");
-      route.className = "item";
-      route.innerHTML =
-        `<strong>この暮らしの想定ルート</strong>` +
-        `<div class="small" style="margin-top:8px">` +
-        `今週: ${state.profile.route.week.join(" / ")}<br>` +
-        `1か月: ${state.profile.route.month}<br>` +
-        `1年: ${state.profile.route.year}<br>` +
-        `目安: ${state.profile.route.estimate}` +
-        `</div>`;
-      list.appendChild(route);
-    }
-
     list.querySelectorAll(".item-calendar-btn").forEach(button => {
       button.onclick = async event => {
         pulse(event.currentTarget);
@@ -489,6 +605,9 @@
         }
       };
     });
+
+    $("calendarBtn").textContent = "全部カレンダーに入れる";
+    $("editPlanBtn").textContent = "想定ルートを見る";
   }
 
   function renderHome() {
@@ -499,7 +618,7 @@
       ? `前回は ${new Date(lastLog.createdAt).toLocaleDateString("ja-JP")} に作っています。理想の暮らしは必要なときだけ見直せます。`
       : "前回の理想の暮らしを引き継げます。必要なときだけ質問をやり直してください。";
     $("homeMainBtn").textContent = "前回の暮らしで今日を作る";
-    $("homeSubBtn").textContent = "理想の暮らしを見直す";
+    $("homeSubBtn").textContent = "暮らし一覧を見る";
     $("homeMainBtn").onclick = event => {
       pulse(event.currentTarget);
       hydrateInputFromProfile();
@@ -507,7 +626,8 @@
     };
     $("homeSubBtn").onclick = event => {
       pulse(event.currentTarget);
-      startQuiz(true);
+      state.catalogBackTo = "home";
+      setScreen("catalog", { reset: true });
     };
   }
 
@@ -535,6 +655,8 @@
     renderScreens();
     renderChoose();
     renderDetail();
+    renderRoute();
+    renderCatalog();
     renderToday();
     renderPlan();
     renderHome();
@@ -594,7 +716,8 @@
 
   $("editPlanBtn").onclick = event => {
     pulse(event.currentTarget);
-    setScreen("today");
+    state.routeView = "today";
+    setScreen("route");
   };
 
   $("calendarBtn").onclick = async event => {

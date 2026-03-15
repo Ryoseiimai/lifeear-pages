@@ -121,7 +121,7 @@ window.LifeEarData = (() => {
   const QUIZ_STEPS = [
     {
       id: "ideal",
-      title: "憧れる暮らしはどれに近いですか？",
+      title: "どんな人みたいに暮らしたいですか？",
       hint: "いちばん近いものをひとつ選んでください。",
       options: [
         { id: "founder", label: "起業家みたいに前へ進む", hint: "決めて進む一日にしたい" },
@@ -133,8 +133,8 @@ window.LifeEarData = (() => {
     },
     {
       id: "focus",
-      title: "この3か月でいちばん変えたいのは？",
-      hint: "今いちばん動かしたいテーマを選んでください。",
+      title: "今いちばん整えたいのはどこですか？",
+      hint: "この先しばらくで変えたいテーマを選んでください。",
       options: [
         { id: "work", label: "仕事", hint: "仕事の進み方を変えたい" },
         { id: "body", label: "体", hint: "体調や体力を整えたい" },
@@ -145,8 +145,8 @@ window.LifeEarData = (() => {
     },
     {
       id: "reality",
-      title: "今の現実にいちばん近いのは？",
-      hint: "今日の作り方に反映するための質問です。",
+      title: "今の自分にいちばん近いのはどれですか？",
+      hint: "今日の作り方を決めるための質問です。",
       options: [
         { id: "time", label: "時間が足りない", hint: "予定が詰まりやすい" },
         { id: "schedule", label: "予定が読みにくい", hint: "突発が入りやすい" },
@@ -156,7 +156,7 @@ window.LifeEarData = (() => {
     },
     {
       id: "pace",
-      title: "どれくらいの強さで変えたいですか？",
+      title: "今回はどのくらいのペースで変えたいですか？",
       hint: "無理せずでも、しっかりでも選べます。",
       options: [
         { id: "gentle", label: "無理せずゆっくり", hint: "続けられる形を最優先にしたい" },
