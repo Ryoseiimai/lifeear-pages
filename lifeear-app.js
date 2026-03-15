@@ -395,6 +395,7 @@
         <span class="pill">${state.quizResult.badge}</span>
         <h2 style="margin-top:12px">${state.quizResult.title}</h2>
         <p class="small" style="margin-top:10px">${state.quizResult.summary}</p>
+        <button class="text-link" id="openCatalogInlineBtn" style="margin-top:10px">他の暮らし一覧を見る</button>
       </article>
       <article class="card">
         <span class="pill">こう見立てました</span>
@@ -404,8 +405,6 @@
       </article>
       <div class="actions">
         <button class="primary" id="confirmProfileBtn">この暮らしで進める</button>
-        <button class="secondary" id="openRouteBtn">想定ルートを見る</button>
-        <button class="secondary" id="openCatalogBtn">暮らし一覧を見る</button>
       </div>
     `;
 
@@ -426,13 +425,7 @@
       setScreen("today");
     };
 
-    $("openRouteBtn").onclick = event => {
-      pulse(event.currentTarget);
-      state.routeView = "today";
-      setScreen("route");
-    };
-
-    $("openCatalogBtn").onclick = event => {
+    $("openCatalogInlineBtn").onclick = event => {
       pulse(event.currentTarget);
       state.catalogBackTo = "detail";
       setScreen("catalog");
@@ -607,7 +600,7 @@
     });
 
     $("calendarBtn").textContent = "全部カレンダーに入れる";
-    $("editPlanBtn").textContent = "想定ルートを見る";
+    $("editPlanBtn").textContent = "条件を変える";
   }
 
   function renderHome() {
@@ -716,8 +709,7 @@
 
   $("editPlanBtn").onclick = event => {
     pulse(event.currentTarget);
-    state.routeView = "today";
-    setScreen("route");
+    setScreen("today");
   };
 
   $("calendarBtn").onclick = async event => {
