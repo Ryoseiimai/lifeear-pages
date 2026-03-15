@@ -215,6 +215,44 @@ window.LifeEarData = (() => {
     intense: "しっかり変えていく"
   };
 
+  const PILLARS = {
+    sleep: {
+      label: "睡眠",
+      time: "22:30"
+    },
+    food: {
+      label: "食事",
+      time: "12:30"
+    },
+    exercise: {
+      label: "運動",
+      time: "07:00"
+    },
+    learning: {
+      label: "学び",
+      time: "20:00"
+    },
+    self: {
+      label: "自己理解",
+      time: "21:00"
+    }
+  };
+
+  const CARE_TIME_OPTIONS = [
+    { id: "45", label: "45分くらい", minutes: 45 },
+    { id: "90", label: "90分くらい", minutes: 90 },
+    { id: "150", label: "2時間半くらい", minutes: 150 },
+    { id: "210", label: "3時間半くらい", minutes: 210 }
+  ];
+
+  const ARCHETYPE_PILLAR_WEIGHTS = {
+    founder: { sleep: 24, food: 14, exercise: 14, learning: 30, self: 18 },
+    fitness: { sleep: 28, food: 22, exercise: 28, learning: 10, self: 12 },
+    calm: { sleep: 26, food: 14, exercise: 12, learning: 10, self: 30 },
+    creator: { sleep: 18, food: 12, exercise: 12, learning: 32, self: 26 },
+    money: { sleep: 20, food: 12, exercise: 10, learning: 34, self: 24 }
+  };
+
   function readJson(key, fallback) {
     try {
       return JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback));
@@ -320,7 +358,7 @@ window.LifeEarData = (() => {
       id: profile.id || `profile-${Date.now()}`,
       createdAt: profile.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      lastDailyState: profile.lastDailyState || { sleep: 7, energy: "medium" },
+      lastDailyState: profile.lastDailyState || { sleep: 7, energy: "medium", careTime: 90 },
       ...deriveProfile(fallbackAnswers)
     };
   }
@@ -333,6 +371,9 @@ window.LifeEarData = (() => {
     FOCUS_TEXT,
     REALITY_TEXT,
     PACE_TEXT,
+    PILLARS,
+    CARE_TIME_OPTIONS,
+    ARCHETYPE_PILLAR_WEIGHTS,
     readJson,
     deriveProfile,
     normalizeProfile

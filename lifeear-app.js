@@ -4,13 +4,16 @@
     ARCHETYPES,
     QUIZ_STEPS,
     CALENDAR_SLOTS,
+    PILLARS,
+    CARE_TIME_OPTIONS,
+    ARCHETYPE_PILLAR_WEIGHTS,
     readJson,
     normalizeProfile,
     deriveProfile
   } = window.LifeEarData;
 
   const initialProfile = normalizeProfile(readJson(STORAGE.profile, null));
-  const initialDailyState = initialProfile?.lastDailyState || { sleep: 7, energy: "medium" };
+  const initialDailyState = initialProfile?.lastDailyState || { sleep: 7, energy: "medium", careTime: 90 };
 
   const state = {
     screen: initialProfile ? "home" : "welcome",
@@ -28,7 +31,8 @@
     catalogBackTo: "home",
     input: {
       sleep: initialDailyState.sleep || 7,
-      energy: initialDailyState.energy || "medium"
+      energy: initialDailyState.energy || "medium",
+      careTime: initialDailyState.careTime || 90
     }
   };
 
@@ -119,10 +123,12 @@
     if (!state.profile?.lastDailyState) return;
     state.input = {
       sleep: state.profile.lastDailyState.sleep || 7,
-      energy: state.profile.lastDailyState.energy || "medium"
+      energy: state.profile.lastDailyState.energy || "medium",
+      careTime: state.profile.lastDailyState.careTime || 90
     };
     if ($("sleepInput")) $("sleepInput").value = String(state.input.sleep);
     if ($("energyInput")) $("energyInput").value = state.input.energy;
+    if ($("careTimeInput")) $("careTimeInput").value = String(state.input.careTime);
   }
 
   function createRoadmapHtml(profileLike) {
@@ -136,85 +142,214 @@
     );
   }
 
+  function getCareTimeLabel(minutes) {
+    return CARE_TIME_OPTIONS.find(option => option.minutes === minutes)?.label || `${minutes}分`;
+  }
+
+  function allocateMinutes(weights, totalMinutes) {
+    const ids = Object.keys(weights);
+    const totalWeight = ids.reduce((sum, id) => sum + weights[id], 0);
+    const raw = {};
+    const allocated = {};
+    let used = 0;
+
+    ids.forEach(id => {
+      raw[id] = (weights[id] / totalWeight) * totalMinutes;
+      allocated[id] = Math.max(5, Math.floor(raw[id] / 5) * 5);
+      used += allocated[id];
+    });
+
+    while (used > totalMinutes) {
+      const candidate = ids
+        .filter(id => allocated[id] > 5)
+        .sort((a, b) => (allocated[b] - raw[b]) - (allocated[a] - raw[a]))[0];
+      if (!candidate) break;
+      allocated[candidate] -= 5;
+      used -= 5;
+    }
+
+    while (used < totalMinutes) {
+      const candidate = ids
+        .sort((a, b) => (raw[b] - allocated[b]) - (raw[a] - allocated[a]))[0];
+      allocated[candidate] += 5;
+      used += 5;
+    }
+
+    return allocated;
+  }
+
+  function buildPillarWeights(modelKey) {
+    const weights = { ...ARCHETYPE_PILLAR_WEIGHTS[modelKey] };
+    const answers = state.profile?.answers || {};
+
+    if (answers.focus === "work") {
+      weights.learning += 8;
+      weights.self += 4;
+    }
+    if (answers.focus === "body") {
+      weights.sleep += 8;
+      weights.food += 6;
+      weights.exercise += 8;
+    }
+    if (answers.focus === "heart") {
+      weights.self += 10;
+      weights.sleep += 6;
+    }
+    if (answers.focus === "money") {
+      weights.learning += 8;
+      weights.self += 5;
+      weights.food += 2;
+    }
+    if (answers.focus === "relationships") {
+      weights.self += 8;
+      weights.food += 3;
+      weights.sleep += 3;
+    }
+
+    if (answers.reality === "time") {
+      weights.sleep += 3;
+      weights.food += 3;
+      weights.self += 3;
+      weights.learning -= 2;
+      weights.exercise -= 2;
+    }
+    if (answers.reality === "schedule") {
+      weights.sleep += 4;
+      weights.self += 4;
+    }
+    if (answers.reality === "energy") {
+      weights.sleep += 6;
+      weights.food += 5;
+      weights.exercise += 2;
+    }
+    if (answers.reality === "flex") {
+      weights.learning += 4;
+      weights.exercise += 2;
+      weights.self += 2;
+    }
+
+    if (answers.pace === "gentle") {
+      weights.sleep += 4;
+      weights.self += 3;
+    }
+    if (answers.pace === "intense") {
+      weights.learning += 4;
+      weights.exercise += 2;
+    }
+
+    if (state.input.sleep <= 5) {
+      weights.sleep += 12;
+    } else if (state.input.sleep <= 6) {
+      weights.sleep += 7;
+    }
+
+    if (state.input.energy === "low") {
+      weights.sleep += 8;
+      weights.food += 5;
+      weights.learning -= 1;
+    }
+    if (state.input.energy === "high") {
+      weights.exercise += 4;
+      weights.learning += 4;
+    }
+
+    Object.keys(weights).forEach(id => {
+      weights[id] = Math.max(8, weights[id]);
+    });
+
+    return weights;
+  }
+
+  function buildPillarAdvice(pillarId, minutes, modelKey) {
+    const focus = state.profile?.answers?.focus;
+
+    if (pillarId === "sleep") {
+      return {
+        reason: state.input.sleep <= 6
+          ? "まずは回復を戻すことが、今日の伸びしろを一番作ります。"
+          : "睡眠を整えておくと、理想の暮らしを続けやすくなります。",
+        action: minutes >= 25
+          ? "今夜はいつもより30分早く寝る準備をします。"
+          : "寝る前の画面時間を短くして、眠りやすい流れを作ります。"
+      };
+    }
+
+    if (pillarId === "food") {
+      return {
+        reason: "食事が整うと、集中力と体調のぶれが小さくなります。",
+        action: minutes >= 20
+          ? "次の食事を整える準備をして、たんぱく質をひとつ足します。"
+          : "次の食事で整えたいものをひとつ決めます。"
+      };
+    }
+
+    if (pillarId === "exercise") {
+      return {
+        reason: state.input.energy === "low"
+          ? "軽く動くことで、だるさを引きずりにくくします。"
+          : "運動を少し入れると、今日の立ち上がりが安定します。",
+        action: minutes >= 20
+          ? "歩くかストレッチで、体をしっかり起こす時間を取ります。"
+          : "5分だけでも体をほぐして、止まりすぎない日にします。"
+      };
+    }
+
+    if (pillarId === "learning") {
+      const tailored =
+        modelKey === "money" ? "お金の不安を減らす学びが効きます。" :
+        modelKey === "creator" ? "表現や制作につながる学びが効きます。" :
+        "理想に近づくための学びが効きます。";
+      return {
+        reason: focus === "work" || focus === "money" ? tailored : "短く学ぶ時間が、理想の暮らしの精度を上げます。",
+        action: minutes >= 25
+          ? "25分だけ学びに没頭して、すぐ使える気づきを1つ持ち帰ります。"
+          : "10分だけ学んで、今日使えることを1つだけ拾います。"
+      };
+    }
+
+    return {
+      reason: "自己理解があると、理想と現実のズレを自分で調整しやすくなります。",
+      action: minutes >= 20
+        ? "10分書いて、10分で明日の整え方を決めます。"
+        : "3行だけ振り返って、今日の気づきを残します。"
+    };
+  }
+
   function buildPlan(modelKey) {
-    const { sleep, energy } = state.input;
+    const { sleep, energy, careTime } = state.input;
     const profile = state.profile;
-    const pace = profile?.answers?.pace || "balanced";
-    const reality = profile?.answers?.reality || "schedule";
     const archetype = ARCHETYPES[modelKey];
-
-    let morning = "朝の流れを軽く整えてから始めます。";
-    let daytime = "日中は無理のないペースで大事なことを進めます。";
-    let night = "夜は次の日につながる終わり方を作ります。";
-
-    if (modelKey === "founder") {
-      morning = sleep <= 5
-        ? "朝は15分だけ整理して、最優先をひとつ決めてから動きます。"
-        : "朝の良い時間をひとつ確保して、一番大事な仕事から始めます。";
-      daytime = reality === "time"
-        ? "日中は予定を詰め込みすぎず、連絡や返信はまとめて返します。"
-        : energy === "low"
-          ? "仕事は25分ずつ区切って、切り替えしやすい形で進めます。"
-          : "日中は集中ブロックを1本つくって、調整仕事は後ろに寄せます。";
-      night = pace === "intense"
-        ? "夜に明日の準備を少し厚めにして、次の日も前へ進みやすくします。"
-        : "夜は明日の入口だけ決めて、考えすぎずに終えます。";
-    }
-
-    if (modelKey === "fitness") {
-      morning = sleep <= 5
-        ? "朝は水分補給と軽いストレッチだけにして、回復を優先します。"
-        : "朝に5分から15分だけ体を動かして、体温と気分を上げます。";
-      daytime = energy === "low"
-        ? "日中は無理をせず、歩く回数を増やして体を固めすぎないようにします。"
-        : "日中は座りっぱなしを避けて、こまめに体をほぐします。";
-      night = pace === "gentle"
-        ? "夜は回復を最優先にして、早めに休める流れを作ります。"
-        : "夜は食事と入浴を整えて、明日に疲れを残しにくくします。";
-    }
-
-    if (modelKey === "calm") {
-      morning = sleep <= 5
-        ? "朝は深呼吸と白湯だけにして、急いで始めすぎないようにします。"
-        : "朝に静かな時間を少し取って、気持ちを整えてから動きます。";
-      daytime = reality === "schedule"
-        ? "日中は予定のあいだに余白を入れて、乱れても戻れるようにします。"
-        : "日中は詰め込みすぎず、気持ちが乱れたら一度立て直します。";
-      night = "夜は情報を減らして、頭と心が静かになる終わり方を選びます。";
-    }
-
-    if (modelKey === "creator") {
-      morning = sleep <= 5
-        ? "朝は素材集めやメモだけにして、無理に大きく作り始めません。"
-        : "朝のうちに短くても手を動かして、つくる流れに入ります。";
-      daytime = energy === "low"
-        ? "日中は短い没頭ブロックを1本だけつくり、作業を細かく分けます。"
-        : "日中はまとまった没頭時間を作って、ひとつの制作に深く入ります。";
-      night = pace === "intense"
-        ? "夜に次に作るものを具体化して、翌日の着手を軽くします。"
-        : "夜は思いつきを軽く残して、続きやすいところで止めます。";
-    }
-
-    if (modelKey === "money") {
-      morning = "朝に今日使う上限を決めて、なんとなく使う流れを止めます。";
-      daytime = energy === "low"
-        ? "日中は買い物を急がず、本当に必要かを一度置いて考えます。"
-        : "使うときは目的を決めてから使い、なんとなくの出費を減らします。";
-      night = pace === "intense"
-        ? "夜に支出を振り返って、次に減らせそうなところをひとつ決めます。"
-        : "夜に今日のお金の流れを軽く見直して終えます。";
-    }
+    const weights = buildPillarWeights(modelKey);
+    const allocated = allocateMinutes(weights, careTime);
+    const pillars = Object.entries(PILLARS).map(([pillarId, pillar]) => {
+      const advice = buildPillarAdvice(pillarId, allocated[pillarId], modelKey);
+      return {
+        id: pillarId,
+        label: pillar.label,
+        minutes: allocated[pillarId],
+        time: pillar.time,
+        reason: advice.reason,
+        action: advice.action
+      };
+    });
+    const topThree = [...pillars]
+      .sort((a, b) => b.minutes - a.minutes)
+      .slice(0, 3);
 
     return {
       title: `今日の ${archetype.title}`,
       summary:
         `${archetype.intro} ` +
-        `睡眠 ${sleep}時間 / 今日は ${energyLabel(energy)} 前提で、朝・日中・夜に分けました。`,
+        `今日は ${getCareTimeLabel(careTime)} を、食事・睡眠・運動・学び・自己理解に配分します。` +
+        `睡眠 ${sleep}時間 / ${energyLabel(energy)} 前提で、優先度を調整しています。`,
+      pillars,
       items: [
-        ["朝", morning],
-        ["日中", daytime],
-        ["夜", night]
+        ["最初に", `${topThree[0].label}に ${topThree[0].minutes}分。${topThree[0].action}`],
+        ["次に", `${topThree[1].label}に ${topThree[1].minutes}分。${topThree[1].action}`],
+        ["最後に", `${topThree[2].label}に ${topThree[2].minutes}分。${topThree[2].action}`]
       ],
+      focusLine: `今日は「${topThree[0].label}」を軸に整える日です。`,
+      careTime,
       route: profile?.route || null,
       modelId: modelKey,
       createdAt: new Date().toISOString()
@@ -273,14 +408,30 @@
   }
 
   function buildCalendarEntries(plan) {
-    const slots = CALENDAR_SLOTS[plan.modelId] || CALENDAR_SLOTS.founder;
     const today = new Date();
     today.setSeconds(0, 0);
-    return plan.items.map(([label, text], index) => {
-      const slot = slots[index] || slots[slots.length - 1];
-      const start = toDateWithTime(today, slot.time);
-      const end = new Date(start.getTime() + slot.minutes * 60 * 1000);
-      return { title: `${label} | ${plan.title}`, description: text, start, end };
+    const source = plan.pillars?.length
+      ? plan.pillars.map(pillar => ({
+        label: pillar.label,
+        text: `${pillar.minutes}分: ${pillar.reason} ${pillar.action}`,
+        time: pillar.time,
+        minutes: pillar.minutes
+      }))
+      : plan.items.map(([label, text], index) => {
+        const slots = CALENDAR_SLOTS[plan.modelId] || CALENDAR_SLOTS.founder;
+        const slot = slots[index] || slots[slots.length - 1];
+        return { label, text, time: slot.time, minutes: slot.minutes };
+      });
+
+    return source.map(entry => {
+      const start = toDateWithTime(today, entry.time);
+      const end = new Date(start.getTime() + entry.minutes * 60 * 1000);
+      return {
+        title: `${entry.label} | ${plan.title}`,
+        description: entry.text,
+        start,
+        end
+      };
     });
   }
 
@@ -491,7 +642,7 @@
         id: state.profile?.id || `profile-${Date.now()}`,
         createdAt: state.profile?.createdAt || new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-        lastDailyState: state.profile?.lastDailyState || { sleep: 7, energy: "medium" },
+        lastDailyState: state.profile?.lastDailyState || { sleep: 7, energy: "medium", careTime: 90 },
         ...state.quizResult
       };
       state.quizResult = null;
@@ -571,7 +722,7 @@
           id: state.profile?.id || `profile-${Date.now()}`,
           createdAt: state.profile?.createdAt || new Date().toISOString(),
           updatedAt: new Date().toISOString(),
-          lastDailyState: state.profile?.lastDailyState || { sleep: 7, energy: "medium" },
+          lastDailyState: state.profile?.lastDailyState || { sleep: 7, energy: "medium", careTime: 90 },
           ...state.quizResult
         };
         state.quizResult = null;
@@ -635,8 +786,8 @@
     if (!profileLike) return;
     const last = state.profile?.lastDailyState;
     $("todayLead").textContent = last
-      ? `前回の「睡眠 ${last.sleep}時間 / ${energyLabel(last.energy)}」を入れてあります。必要なら変えてください。`
-      : `「${profileLike.title}」に寄せるために、睡眠時間と今日の余力だけ教えてください。`;
+      ? `前回の「睡眠 ${last.sleep}時間 / ${energyLabel(last.energy)} / ${getCareTimeLabel(last.careTime || 90)}」を入れてあります。必要なら変えてください。`
+      : `「${profileLike.title}」に寄せるために、睡眠と余力と使える時間を教えてください。`;
   }
 
   function renderPlan() {
@@ -649,21 +800,39 @@
       return;
     }
 
-    $("planTitle").textContent = "では、今日はこう進めましょう。";
+    $("planTitle").textContent = "では、今日はこう時間を使いましょう。";
     $("planSummary").textContent = state.currentPlan.summary;
 
-    state.currentPlan.items.forEach(([label, text], index) => {
+    const focusItem = document.createElement("div");
+    focusItem.className = "item";
+    focusItem.innerHTML =
+      `<strong>${state.currentPlan.focusLine}</strong>` +
+      `<div class="small" style="margin-top:6px">今日は ${getCareTimeLabel(state.currentPlan.careTime)} を配分しています。</div>`;
+    list.appendChild(focusItem);
+
+    state.currentPlan.pillars.forEach((pillar, index) => {
       const item = document.createElement("div");
       item.className = "item";
       item.innerHTML =
-        `<strong>${label}</strong>` +
-        `<div class="small">${text}</div>` +
+        `<div style="display:flex;justify-content:space-between;gap:8px;align-items:center">` +
+        `<strong>${pillar.label}</strong>` +
+        `<span class="pill">${pillar.minutes}分</span>` +
+        `</div>` +
+        `<div class="small" style="margin-top:8px">${pillar.reason}</div>` +
+        `<div class="small" style="margin-top:6px">${pillar.action}</div>` +
         `<div class="button-grid" style="margin-top:10px">` +
         `<button class="secondary item-google-btn" data-index="${index}">Google</button>` +
         `<button class="secondary item-apple-btn" data-index="${index}">iPhone / Apple</button>` +
         `</div>`;
       list.appendChild(item);
     });
+
+    const supportItem = document.createElement("div");
+    supportItem.className = "item";
+    supportItem.innerHTML =
+      `<strong>今日のステップアップ</strong>` +
+      state.currentPlan.items.map(([label, text]) => `<div class="small" style="margin-top:8px">${label}: ${text}</div>`).join("");
+    list.appendChild(supportItem);
 
     list.querySelectorAll(".item-google-btn").forEach(button => {
       button.onclick = async event => {
@@ -759,6 +928,18 @@
     }
   }
 
+  function setupCareTimeOptions() {
+    const select = $("careTimeInput");
+    select.innerHTML = "";
+    CARE_TIME_OPTIONS.forEach(option => {
+      const node = document.createElement("option");
+      node.value = String(option.minutes);
+      node.textContent = option.label;
+      if (option.minutes === state.input.careTime) node.selected = true;
+      select.appendChild(node);
+    });
+  }
+
   $("startBtn").onclick = event => {
     pulse(event.currentTarget);
     startQuiz(false);
@@ -774,11 +955,12 @@
     startQuiz(true);
   };
 
-  ["sleepInput", "energyInput"].forEach(id => {
+  ["sleepInput", "energyInput", "careTimeInput"].forEach(id => {
     $(id).addEventListener("input", () => {
       state.input = {
         sleep: Number($("sleepInput").value),
-        energy: $("energyInput").value
+        energy: $("energyInput").value,
+        careTime: Number($("careTimeInput").value)
       };
       renderToday();
     });
@@ -789,7 +971,8 @@
     if (!state.profile) return;
     state.profile.lastDailyState = {
       sleep: state.input.sleep,
-      energy: state.input.energy
+      energy: state.input.energy,
+      careTime: state.input.careTime
     };
     state.profile.updatedAt = new Date().toISOString();
     state.currentPlan = buildPlan(getCurrentModelKey());
@@ -857,6 +1040,7 @@
   });
 
   setupSleepOptions();
+  setupCareTimeOptions();
   hydrateInputFromProfile();
   render();
 })();
