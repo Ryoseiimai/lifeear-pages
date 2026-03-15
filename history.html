@@ -1,0 +1,418 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    >
+    <title>LifeEar 更新履歴</title>
+    <style>
+      :root{
+        --bg:#eef6ff;
+        --bg2:#f8fbff;
+        --card:#ffffff;
+        --line:#d9e7f4;
+        --text:#0f172a;
+        --muted:#64748b;
+        --blue:#2563eb;
+        --sky:#0ea5e9;
+        --soft:#edf4ff;
+        --shadow:0 18px 36px rgba(15,23,42,.08);
+      }
+      *{box-sizing:border-box}
+      html,body{margin:0}
+      body{
+        min-height:100vh;
+        background:
+          radial-gradient(circle at top left, rgba(56,189,248,.16), transparent 24%),
+          linear-gradient(180deg,var(--bg) 0%,var(--bg2) 100%);
+        color:var(--text);
+        font-family:"Hiragino Sans","Yu Gothic UI",sans-serif;
+      }
+      a{color:inherit}
+      .page{
+        width:min(980px,100%);
+        margin:0 auto;
+        padding:18px 14px 48px;
+      }
+      .topbar{
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap:12px;
+        margin-bottom:14px;
+      }
+      .top-actions{
+        display:flex;
+        align-items:center;
+        gap:10px;
+        flex-wrap:wrap;
+      }
+      .button,
+      .link-button{
+        display:inline-flex;
+        align-items:center;
+        justify-content:center;
+        min-height:42px;
+        padding:0 16px;
+        border-radius:999px;
+        border:1px solid var(--line);
+        background:#fff;
+        color:var(--text);
+        font-size:13px;
+        font-weight:800;
+        text-decoration:none;
+        box-shadow:0 12px 24px rgba(15,23,42,.04);
+      }
+      .button.primary{
+        border:none;
+        background:linear-gradient(135deg,var(--sky),var(--blue));
+        color:#fff;
+        box-shadow:0 14px 30px rgba(37,99,235,.22);
+      }
+      .hero,
+      .card{
+        border:1px solid var(--line);
+        border-radius:26px;
+        background:var(--card);
+        box-shadow:var(--shadow);
+      }
+      .hero{
+        padding:24px 20px;
+        background:
+          radial-gradient(circle at top right, rgba(56,189,248,.12), transparent 30%),
+          linear-gradient(180deg,#ffffff 0%,#f8fbff 100%);
+      }
+      .eyebrow{
+        display:inline-flex;
+        align-items:center;
+        min-height:30px;
+        padding:0 12px;
+        border-radius:999px;
+        background:#e8f3ff;
+        color:var(--blue);
+        font-size:12px;
+        font-weight:800;
+      }
+      h1,h2,h3,p{margin:0}
+      h1{
+        margin-top:14px;
+        font-size:38px;
+        line-height:1.02;
+        letter-spacing:-.06em;
+      }
+      .lead{
+        margin-top:12px;
+        color:var(--muted);
+        font-size:15px;
+        line-height:1.8;
+      }
+      .hero-grid,
+      .cards,
+      .meta-grid,
+      .history-list{
+        display:grid;
+        gap:14px;
+      }
+      .hero-grid{
+        margin-top:18px;
+      }
+      .cards{
+        grid-template-columns:repeat(3,minmax(0,1fr));
+        margin-top:18px;
+      }
+      .stat{
+        padding:16px;
+      }
+      .stat small,
+      .muted{
+        color:var(--muted);
+      }
+      .stat strong{
+        display:block;
+        margin-top:8px;
+        font-size:24px;
+        letter-spacing:-.04em;
+      }
+      .section-head{
+        display:flex;
+        align-items:end;
+        justify-content:space-between;
+        gap:10px;
+        margin:26px 2px 12px;
+      }
+      .history-item{
+        padding:18px;
+      }
+      .history-meta{
+        display:flex;
+        align-items:center;
+        gap:8px;
+        flex-wrap:wrap;
+        margin-bottom:14px;
+      }
+      .badge{
+        display:inline-flex;
+        align-items:center;
+        min-height:28px;
+        padding:0 11px;
+        border-radius:999px;
+        font-size:12px;
+        font-weight:800;
+      }
+      .badge.time{
+        background:#f8fbff;
+        border:1px solid var(--line);
+        color:var(--muted);
+      }
+      .badge.category{
+        background:#e8f3ff;
+        color:var(--blue);
+      }
+      .badge.done{
+        background:#e8fff3;
+        color:#0f8b57;
+      }
+      .badge.pending{
+        background:#fff4e5;
+        color:#b76b00;
+      }
+      .version{
+        color:var(--muted);
+        font-size:12px;
+        font-weight:800;
+        letter-spacing:.04em;
+      }
+      .detail-grid{
+        display:grid;
+        gap:10px;
+        margin-top:14px;
+      }
+      .detail{
+        padding:14px;
+        border:1px solid #e2e8f0;
+        border-radius:18px;
+        background:#fbfdff;
+      }
+      .detail h3{
+        margin-bottom:6px;
+        font-size:13px;
+      }
+      .detail p{
+        color:var(--text);
+        line-height:1.75;
+      }
+      .sub{
+        margin-top:14px;
+        color:var(--muted);
+        font-size:13px;
+        line-height:1.7;
+      }
+      .action-row{
+        display:flex;
+        align-items:center;
+        gap:10px;
+        flex-wrap:wrap;
+        margin-top:16px;
+      }
+      .inline-note{
+        padding:14px 16px;
+        border:1px dashed #c8dbef;
+        border-radius:18px;
+        color:var(--muted);
+        line-height:1.75;
+        background:#fcfdff;
+      }
+      .code{
+        display:inline-flex;
+        align-items:center;
+        padding:3px 8px;
+        border-radius:999px;
+        background:#f1f5f9;
+        font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+        font-size:12px;
+      }
+      @media (max-width:720px){
+        .page{padding:14px 12px 34px}
+        h1{font-size:31px}
+        .cards{grid-template-columns:1fr}
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <header class="topbar">
+        <a class="button" href="./index.html">LifeEarへ戻る</a>
+        <div class="top-actions">
+          <a class="button primary" href="./index.html">アプリを開く</a>
+          <a class="button" href="https://github.com/Ryoseiimai/lifeear-pages" target="_blank" rel="noreferrer">GitHub</a>
+        </div>
+      </header>
+
+      <section class="hero">
+        <span class="eyebrow">LifeEar 更新履歴</span>
+        <h1>いつ、何を、なぜ変えたかを<br>あとから追えるページです。</h1>
+        <p class="lead" id="coreHypothesis"></p>
+
+        <div class="cards">
+          <article class="card stat">
+            <small>更新件数</small>
+            <strong id="historyCount">-</strong>
+            <div class="muted">このアプリの変更を時系列で見返せます。</div>
+          </article>
+          <article class="card stat">
+            <small>最新更新</small>
+            <strong id="lastUpdated">-</strong>
+            <div class="muted">いちばん新しい変更時刻です。</div>
+          </article>
+          <article class="card stat">
+            <small>今の状態</small>
+            <strong id="statusSummary">-</strong>
+            <div class="muted">検討中の論点が残っていても履歴として残します。</div>
+          </article>
+        </div>
+      </section>
+
+      <section class="section-head">
+        <div>
+          <h2>更新の流れ</h2>
+          <p class="muted">変更内容、理由、結果が1つずつ追えるように並べています。</p>
+        </div>
+      </section>
+
+      <section class="history-list" id="historyList"></section>
+
+      <section class="section-head">
+        <div>
+          <h2>このページの見方</h2>
+          <p class="muted">必要なときだけ読み返せるように、短くまとめています。</p>
+        </div>
+      </section>
+
+      <section class="card inline-note">
+        <div>まずは最新のカードを見れば、今どこまで進んでいて、次に何を見ればいいかが分かります。</div>
+        <div style="margin-top:8px">
+          コミット番号がある行は <span class="code">GitHub の変更</span> まで追えます。検討メモは実装前の論点整理として残しています。
+        </div>
+      </section>
+    </main>
+
+    <script src="./lifeear-history.js"></script>
+    <script>
+      (function () {
+        const data = window.LifeEarHistory;
+        if (!data) {
+          return;
+        }
+
+        const historyCount = document.getElementById("historyCount");
+        const lastUpdated = document.getElementById("lastUpdated");
+        const statusSummary = document.getElementById("statusSummary");
+        const coreHypothesis = document.getElementById("coreHypothesis");
+        const historyList = document.getElementById("historyList");
+
+        const completedCount = data.items.filter((item) => item.status === "完了").length;
+        const pendingCount = data.items.filter((item) => item.status !== "完了").length;
+
+        historyCount.textContent = String(data.items.length);
+        lastUpdated.textContent = data.updatedAt;
+        statusSummary.textContent = pendingCount > 0 ? "進行中あり" : "すべて完了";
+        coreHypothesis.textContent = data.coreHypothesis;
+
+        function buildCommitUrl(version) {
+          if (!/^[0-9a-f]{7}$/i.test(version)) {
+            return null;
+          }
+          return data.repoUrl + "/commit/" + version;
+        }
+
+        function createBadge(text, className) {
+          const span = document.createElement("span");
+          span.className = "badge " + className;
+          span.textContent = text;
+          return span;
+        }
+
+        data.items.forEach((item) => {
+          const article = document.createElement("article");
+          article.className = "card history-item";
+
+          const meta = document.createElement("div");
+          meta.className = "history-meta";
+          meta.appendChild(createBadge(item.updatedAt, "time"));
+          meta.appendChild(createBadge(item.category, "category"));
+          meta.appendChild(createBadge(item.status, item.status === "完了" ? "done" : "pending"));
+
+          const version = document.createElement("span");
+          version.className = "version";
+          version.textContent = "版: " + item.version;
+          meta.appendChild(version);
+
+          const title = document.createElement("h3");
+          title.textContent = item.change;
+
+          const detailGrid = document.createElement("div");
+          detailGrid.className = "detail-grid";
+
+          [
+            ["なぜ変えたか", item.why],
+            ["結果どうなったか", item.result],
+            ["次に見るポイント", item.next]
+          ].forEach(([label, value]) => {
+            const block = document.createElement("div");
+            block.className = "detail";
+            const heading = document.createElement("h3");
+            heading.textContent = label;
+            const text = document.createElement("p");
+            text.textContent = value;
+            block.appendChild(heading);
+            block.appendChild(text);
+            detailGrid.appendChild(block);
+          });
+
+          const sub = document.createElement("div");
+          sub.className = "sub";
+          sub.innerHTML =
+            "主な変更ファイル: <span class=\"code\">" +
+            item.files +
+            "</span>";
+
+          const actions = document.createElement("div");
+          actions.className = "action-row";
+
+          if (/^https?:/i.test(item.link)) {
+            const link = document.createElement("a");
+            link.className = "link-button";
+            link.href = item.link;
+            link.target = "_blank";
+            link.rel = "noreferrer";
+            link.textContent = "確認先を開く";
+            actions.appendChild(link);
+          }
+
+          const commitUrl = buildCommitUrl(item.version);
+          if (commitUrl) {
+            const commit = document.createElement("a");
+            commit.className = "link-button";
+            commit.href = commitUrl;
+            commit.target = "_blank";
+            commit.rel = "noreferrer";
+            commit.textContent = "コミットを見る";
+            actions.appendChild(commit);
+          }
+
+          article.appendChild(meta);
+          article.appendChild(title);
+          article.appendChild(detailGrid);
+          article.appendChild(sub);
+          if (actions.children.length) {
+            article.appendChild(actions);
+          }
+
+          historyList.appendChild(article);
+        });
+      })();
+    </script>
+  </body>
+</html>

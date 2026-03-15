@@ -224,6 +224,22 @@
         grid-template-columns:repeat(2,1fr);
         gap:8px;
       }
+      .meta-links{
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        margin-top:12px;
+      }
+      .inline-link{
+        display:inline-flex;
+        align-items:center;
+        gap:6px;
+        color:var(--blue);
+        font-size:12px;
+        font-weight:800;
+        text-decoration:underline;
+        text-underline-offset:3px;
+      }
       .text-link{
         width:auto;
         min-height:auto;
@@ -348,6 +364,9 @@
             <div class="actions" style="margin-top:18px">
               <button class="primary" id="startBtn">理想の暮らしを見つける</button>
             </div>
+            <div class="meta-links">
+              <a class="inline-link" href="./history.html">更新履歴を見る</a>
+            </div>
           </article>
         </section>
 
@@ -441,6 +460,9 @@
             <div class="actions" style="margin-top:16px">
               <button class="primary" id="homeMainBtn">今日の過ごし方を作る</button>
               <button class="secondary" id="homeSubBtn">理想の暮らしを変える</button>
+            </div>
+            <div class="meta-links">
+              <a class="inline-link" href="./history.html">このアプリの更新履歴を見る</a>
             </div>
           </article>
         </section>
